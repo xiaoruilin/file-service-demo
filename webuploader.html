@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+
+<head></head>
+
+<body>
+
+    <div id="uploader" class="wu-example">
+        <!--用来存放文件信息-->
+        <div id="thelist" class="uploader-list"></div>
+        <div class="btns">
+            <div id="picker">选择文件</div>
+            <button id="ctlBtn" class="btn btn-default">开始上传</button>
+        </div>
+    </div>
+    <!-- <div>
+        <form id="uploadForm">
+            AJAX上传多文件： <input type="file" name="file" multiple />
+            <input type="button" value="上传" onclick="doUpload()" />
+        </form>
+    </div> -->
+    <script src="./jquery-1.11.3.min.js"></script>
+    <script src="./sha1.js"></script>
+    <script src="./webuploader-0.1.5/webuploader.min.js"></script>
+    <script>
+        function doUpload() {
+            var formData = new FormData($("#uploadForm")[0]);
+            $.ajax({
+                url: 'http://localhost:5000/files',
+                type: 'POST',
+                data: {
+                    //file: formData,
+                    periodMinute: 0,
+                    //hash:hex_sha1(file.name + file.size + file.ext),
+                    ownerToken: '2kXVNH1~INZ0kCHDTwUG6ietPeFcCAAAAAQAAAAEAAAAAYfEqhw',
+                    //fileMd5: $.md5(file.name + file.size + file.ext),
+                    fileName: "sdfdsfdsf",
+                },
+                async: false,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: function (returndata) {
+                    alert(returndata);
+                },
+                error: function (returndata) {
+                    alert(returndata);
+                }
+            });
+        }
+var fm = [];
+        WebUploader.Uploader.register({
+            "before-send-file": "beforeSendFile",
+            "before-send": "beforeSend"
+        }, {
+                "beforeSendFile": function (file) {
+                    var deferred = WebUploader.Deferred();
+                    this.options.formData = $.extend(this.options.formData, { 
+                            periodMinute: 0,
+                            ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
+                            fileName: file.name
+                    });
+                    
+                    var chunkObj = null;
+                    $.ajax({
+                        type: "POST",
+                        url: "http://localhost:5000/files",
+                        data: {
+                            periodMinute: 0,
+                            hash:hex_sha1(file),
+                            ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
+                            fileName: file.name
+                        },
+                        dataType: "json",
+                        success: function (data) {
+                            console.log(data);
+                            chunkObj = data;
+                            chunkObj.type = data.type;
+                            chunkObj.chunk == data.chunk;
+                            if (data.type == 0) {
+
+                                deferred.reject();
+                                //$("#" + file.id).find(".state").text("文件已上传");
+                            } else if (data.type == 1) {
+                                if (data.chunk) {
+                                    deferred.resolve();
+                                }
+                            } else {
+                                deferred.resolve();
+                            }
+
+                        },
+                        error: function () {
+                            deferred.resolve();
+                        }
+                    });
+                    //deferred.resolve();
+                    return deferred.promise();
+                },
+                "beforeSend": function (block) {
+                    this.options.server = "http://localhost:5000/files";
+                    var deferred = WebUploader.Deferred();
+                    var fileUpload = $("#picker").find(':input[type="file"]').get(0);
+
+                    var files = fileUpload.files;
+                    var data = new FormData();
+                    for (var i = 0; i < files.length; i++) {
+                        data.append(files[i].name, files[i]);
+                    }
+                    this.options.formData = $.extend(this.options.formData, { 
+                        file: data,
+                            periodMinute: 0,
+                            //hash:hex_sha1(file.name + file.size + file.ext),
+                            ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA'
+                    });
+                    var curChunk = block.chunk;
+                    var totalChunk = block.chunks;
+                    // if (chunkObj.type == "1") {
+                    //     if (curChunk < chunkObj.chunk) {
+                    //         deferred.reject();
+                    //     } else {
+                    //         deferred.resolve();
+                    //     }
+                    // } else {
+                    //     deferred.resolve();
+                    // }
+                    deferred.resolve();
+                    return deferred.promise();
+                }
+            });
+
+        var uploader = WebUploader.create({
+            pick: {
+                id: '#picker',
+                //label: '点击选择文件'
+            },
+            auto: true,
+            swf: './webuploader-0.1.5/Uploader.swf',
+            chunked: true, //分片处理大文件
+            chunkSize: 1 * 1024 * 1024,
+            //server: 'http://localhost:5000/files',
+            disableGlobalDnd: true,
+            threads: 1, //上传并发数
+            fileNumLimit: 300,
+            compress: false, //图片在上传前不进行压缩
+            fileSizeLimit: 1024 * 1024 * 1024,    // 1024 M
+            fileSingleSizeLimit: 1024 * 1024 * 1024    // 1024 M
+        }).on("error", function (type) {
+            if (type == "Q_TYPE_DENIED") {
+                var typeError = "请选择正确文件类型！";
+                if (fileAccept && fileAccept.title) {
+                    typeError = fileAccept.title;
+                }
+                $.messager.alert("提示信息", typeError, "info");
+            }
+            //else if (type == "Q_EXCEED_SIZE_LIMIT") {
+            //    layer.msg("文件大小不能超过2M");
+            //}
+            else {
+                layer.msg("上传出错！请检查后重新上传！错误代码" + type);
+            }
+        }).on("uploadSuccess", function (file, response) {
+            console.info(file);
+        }).on("uploadProgress", function (file, percent) {//一般用此事件做页面信息提示
+            console.info('xxx');
+            return true;
+            //trtds.find('.progressDiv span').html(percent == 1 ? '正在合并文件' : (percent < 0 ? ' 计算md5进度:' : ' 上传进度:') + Math.floor(percent * 100));
+        }).on("beforeFileQueued", function (file) {
+            console.info('xxx1');
+            return true;
+            //return false;  //阻止该文件上传
+        });
+
+        // uploader.on('uploadAccept', function (file, response) {
+        //     if (file.chunk + 1 !== file.chunks) {
+        //         $.extend(uploader.options.formData, { previosName: response.filePath });
+        //     } else {
+        //         $.extend(uploader.options.formData, { previosName: "" });
+        //     }
+        //     return true;
+        // });
+    </script>
+</body>
+
+</html>
