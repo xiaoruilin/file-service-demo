@@ -10,95 +10,41 @@
         <div id="thelist" class="uploader-list"></div>
         <div class="btns">
             <div id="picker">选择文件</div>
-            <button id="ctlBtn" class="btn btn-default">开始上传</button>
         </div>
     </div>
-    <!-- <div>
-        <form id="uploadForm">
-            AJAX上传多文件： <input type="file" name="file" multiple />
-            <input type="button" value="上传" onclick="doUpload()" />
-        </form>
-    </div> -->
     <script src="./jquery-1.11.3.min.js"></script>
     <script src="./sha1.js"></script>
     <script src="./webuploader-0.1.5/webuploader.min.js"></script>
     <script>
-        function doUpload() {
-            var formData = new FormData($("#uploadForm")[0]);
-            $.ajax({
-                url: 'http://localhost:5000/files',
-                type: 'POST',
-                data: {
-                    //file: formData,
-                    periodMinute: 0,
-                    //hash:hex_sha1(file.name + file.size + file.ext),
-                    ownerToken: '2kXVNH1~INZ0kCHDTwUG6ietPeFcCAAAAAQAAAAEAAAAAYfEqhw',
-                    //fileMd5: $.md5(file.name + file.size + file.ext),
-                    fileName: "sdfdsfdsf",
-                },
-                async: false,
-                cache: false,
-                contentType: false,
-                processData: false,
-                success: function (returndata) {
-                    alert(returndata);
-                },
-                error: function (returndata) {
-                    alert(returndata);
-                }
-            });
-        }
-var fm = [];
+        var fm = [];
         WebUploader.Uploader.register({
             "before-send-file": "beforeSendFile",
             "before-send": "beforeSend"
         }, {
                 "beforeSendFile": function (file) {
+                    console.info("beforeSendFile", file);
                     var deferred = WebUploader.Deferred();
-                    this.options.formData = $.extend(this.options.formData, { 
-                            periodMinute: 0,
-                            ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
-                            fileName: file.name
+                    this.options.formData = $.extend(this.options.formData, {
+                        periodMinute: 0,
+                        ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
+                        fileName: file.name
                     });
-                    
-                    var chunkObj = null;
-                    $.ajax({
-                        type: "POST",
-                        url: "http://localhost:5000/files",
-                        data: {
-                            periodMinute: 0,
-                            hash:hex_sha1(file),
-                            ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
-                            fileName: file.name
-                        },
-                        dataType: "json",
-                        success: function (data) {
-                            console.log(data);
-                            chunkObj = data;
-                            chunkObj.type = data.type;
-                            chunkObj.chunk == data.chunk;
-                            if (data.type == 0) {
-
-                                deferred.reject();
-                                //$("#" + file.id).find(".state").text("文件已上传");
-                            } else if (data.type == 1) {
-                                if (data.chunk) {
-                                    deferred.resolve();
-                                }
-                            } else {
-                                deferred.resolve();
-                            }
-
-                        },
-                        error: function () {
+                    //1、计算文件的唯一标记，用于断点续传 
+                    (new WebUploader.Uploader()).md5File(file, 0, 10 * 1024 * 1024)
+                        .progress(function (percentage) {
+                            console.log("正在读取文件");
+                        })
+                        .then(function (val) {
+                            fileMd5 = val;
+                            fm.push(fileMd5);
+                            console.log("成功获取文件信息……");
+                            //获取文件信息后进入下一步 
                             deferred.resolve();
-                        }
-                    });
-                    //deferred.resolve();
+                        });
                     return deferred.promise();
                 },
                 "beforeSend": function (block) {
-                    this.options.server = "http://localhost:5000/files";
+                    this.options.server = "http://219.132.28.170:5000/files";
                     var deferred = WebUploader.Deferred();
                     var fileUpload = $("#picker").find(':input[type="file"]').get(0);
 
@@ -107,12 +53,7 @@ var fm = [];
                     for (var i = 0; i < files.length; i++) {
                         data.append(files[i].name, files[i]);
                     }
-                    this.options.formData = $.extend(this.options.formData, { 
-                        file: data,
-                            periodMinute: 0,
-                            //hash:hex_sha1(file.name + file.size + file.ext),
-                            ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA'
-                    });
+                    this.options.formData = $.extend(this.options.formData, { file: data });
                     var curChunk = block.chunk;
                     var totalChunk = block.chunks;
                     // if (chunkObj.type == "1") {
@@ -138,29 +79,38 @@ var fm = [];
             swf: './webuploader-0.1.5/Uploader.swf',
             chunked: true, //分片处理大文件
             chunkSize: 1 * 1024 * 1024,
-            //server: 'http://localhost:5000/files',
+            //server: 'http://219.132.28.170:5000/files',
             disableGlobalDnd: true,
             threads: 1, //上传并发数
             fileNumLimit: 300,
             compress: false, //图片在上传前不进行压缩
             fileSizeLimit: 1024 * 1024 * 1024,    // 1024 M
             fileSingleSizeLimit: 1024 * 1024 * 1024    // 1024 M
-        }).on("error", function (type) {
-            if (type == "Q_TYPE_DENIED") {
-                var typeError = "请选择正确文件类型！";
-                if (fileAccept && fileAccept.title) {
-                    typeError = fileAccept.title;
-                }
-                $.messager.alert("提示信息", typeError, "info");
+        }).on("error", function (code, file) {
+            var name = file.name;
+            switch (code) {
+                case "F_DUPLICATE":
+                    str = name + "文件重复";
+                    break;
+                case "Q_TYPE_DENIED":
+                    str = name + "文件类型 不允许";
+                    break;
+                case "F_EXCEED_SIZE":
+                    var imageMaxSize = 9;//通过计算
+                    str = name + "文件大小超出限制" + imageMaxSize + "M";
+                    break;
+                case "Q_EXCEED_SIZE_LIMIT":
+                    str = "超出空间文件大小";
+                    break;
+                case "Q_EXCEED_NUM_LIMIT":
+                    str = "抱歉，超过每次上传数量图片限制";
+                    break;
+                default:
+                    str = name + " Error:" + code;
             }
-            //else if (type == "Q_EXCEED_SIZE_LIMIT") {
-            //    layer.msg("文件大小不能超过2M");
-            //}
-            else {
-                layer.msg("上传出错！请检查后重新上传！错误代码" + type);
-            }
+            alert(str);
         }).on("uploadSuccess", function (file, response) {
-            console.info(file);
+            console.info("uploadSuccess", file, response);
         }).on("uploadProgress", function (file, percent) {//一般用此事件做页面信息提示
             console.info('xxx');
             return true;
