@@ -26,6 +26,7 @@
                     var deferred = WebUploader.Deferred();
                     this.options.formData = $.extend(this.options.formData, {
                         periodMinute: 0,
+                        hash:hex_sha1(file),
                         ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
                         fileName: file.name
                     });
@@ -44,7 +45,6 @@
                     return deferred.promise();
                 },
                 "beforeSend": function (block) {
-                    this.options.server = "http://219.132.28.170:5000/files";
                     var deferred = WebUploader.Deferred();
                     var fileUpload = $("#picker").find(':input[type="file"]').get(0);
 
@@ -79,7 +79,7 @@
             swf: './webuploader-0.1.5/Uploader.swf',
             chunked: true, //分片处理大文件
             chunkSize: 1 * 1024 * 1024,
-            //server: 'http://219.132.28.170:5000/files',
+            server: 'http://localhost:5000/files',
             disableGlobalDnd: true,
             threads: 1, //上传并发数
             fileNumLimit: 300,
