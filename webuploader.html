@@ -32,32 +32,26 @@
                         })
                         .then(function (val) {
                             $.ajax({
-                                url: 'http://localhost:5000/files/', type: 'POST', dataType: "json",
-                                data: {
-                                    periodMinute: 0,
-                                    hash: val,
-                                    ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
-                                    fileName: file.name,
-                                    file:''
-                                },
-                                success: function (returndata) {
-                                    console.info("sssss", returndata);
-                                    _this.options.formData = $.extend(_this.options.formData, {
-                                        periodMinute: 0,
-                                        hash: val,
-                                        ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
-                                        fileName: file.name
-                                    });
-                                    console.log("成功获取文件信息……");
-                                    //获取文件信息后进入下一步 
-                                    deferred.resolve();
+                                url:  _this.options.server, type: 'POST', dataType: "json",
+                                data: {periodMinute: 0,hash: val,ownerToken: _this.options.ownerToken,fileName: file.name},
+                                success: function (d) {
+                                    console.info("sssss", d);
+                                    if (d.errorCode == 100) {
+                                        _this.options.formData = $.extend(_this.options.formData, {
+                                            periodMinute: 0,
+                                            hash: val,
+                                            ownerToken:  _this.options.ownerToken,
+                                            fileName: file.name
+                                        });
+                                        console.log("成功获取文件信息……");
+                                        //获取文件信息后进入下一步 
+                                        deferred.resolve();
+                                    }
                                 },
                                 error: function (returndata) {
                                     console.info("eeeeee", returndata);
                                 }
                             });
-
-
                         });
                     return deferred.promise();
                 },
@@ -97,6 +91,7 @@
             chunked: true, //分片处理大文件
             chunkSize: 1 * 1024 * 1024,
             server: 'http://localhost:5000/files',
+            ownerToken:'2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
             disableGlobalDnd: true,
             threads: 1, //上传并发数
             fileNumLimit: 300,
