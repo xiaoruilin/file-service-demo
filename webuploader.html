@@ -32,12 +32,13 @@
                         })
                         .then(function (val) {
                             $.ajax({
-                                url: _this.options.server, type: 'POST', async: false, cache: false, contentType: false, processData: false,
+                                url: 'http://localhost:5000/files/', type: 'POST', dataType: "json",
                                 data: {
                                     periodMinute: 0,
                                     hash: val,
                                     ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
-                                    fileName: file.name
+                                    fileName: file.name,
+                                    file:''
                                 },
                                 success: function (returndata) {
                                     console.info("sssss", returndata);
