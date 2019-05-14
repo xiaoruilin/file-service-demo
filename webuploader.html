@@ -1,88 +1,31 @@
+<!-- 
+    该实例依赖文件服务上传源码在：https://github.com/xiaoruilin/file-service
+ -->
 <!DOCTYPE html>
 <html>
 
-<head></head>
-
+<head>
+    <link href="./webuploader-0.1.5/webuploader.css" rel="stylesheet" />
+</head>
 <body>
-
     <div id="uploader" class="wu-example">
         <!--用来存放文件信息-->
-        <div id="thelist" class="uploader-list"></div>
-        <div class="btns">
-            <div id="picker">选择文件</div>
-        </div>
+        <!-- <div id="thelist" class="uploader-list"></div> -->
+        <!-- <div id="picker" ></div> -->
+        <img id="picker" src="uploader.png"/>
+        <img id="picker1" src="uploader.png"/>
+        <button id="btnUploader">上传</button>
     </div>
     <script src="./jquery-1.11.3.min.js"></script>
-    <script src="./sha1.js"></script>
     <script src="./webuploader-0.1.5/webuploader.min.js"></script>
-    <script src="./webuploader_fileserver.js"></script>
+    <script src="./jquery.webuploader.js"></script>
     <script>
-        $(function(){
-            $('#thelist').webuploader().on("error", function (code, file) {
-            var name = file.name;
-            switch (code) {
-                case "F_DUPLICATE":
-                    str = name + "文件重复";
-                    break;
-                case "Q_TYPE_DENIED":
-                    str = name + "文件类型 不允许";
-                    break;
-                case "F_EXCEED_SIZE":
-                    var imageMaxSize = 9;//通过计算
-                    str = name + "文件大小超出限制" + imageMaxSize + "M";
-                    break;
-                case "Q_EXCEED_SIZE_LIMIT":
-                    str = "超出空间文件大小";
-                    break;
-                case "Q_EXCEED_NUM_LIMIT":
-                    str = "抱歉，超过每次上传数量图片限制";
-                    break;
-                default:
-                    str = name + " Error:" + code;
-            }
-            alert(str);
-        }).on("uploadSuccess", function (file, response) {
-            console.info("uploadSuccess", file, response, this.getFile(file.id));
-        })
-        // .on("uploadProgress", function (file, percent) {//一般用此事件做页面信息提示
-        //     console.info('xxx', this.getFile(file.id));
-        //     return true;
-        //     //trtds.find('.progressDiv span').html(percent == 1 ? '正在合并文件' : (percent < 0 ? ' 计算md5进度:' : ' 上传进度:') + Math.floor(percent * 100));
-        // })
-        .on("beforeFileQueued", function (file) {
-            console.info('xxx1', this.getFile(file.id));
-            return true;
-            //return false;  //阻止该文件上传
-        }).on('fileQueued', function (file) {
-            console.log('sha1 result:', sha1(file));
+        $(function () {
+            //默认选择后自动上传
+            $('#picker').webuploader();
+            //选择后点击再上传
+            $('#picker1').webuploader({auto:false,pickupload:'#btnUploader'});
         });
-        });
-        // var uploader = WebUploader.create({
-        //     pick: {
-        //         id: '#picker',
-        //         //label: '点击选择文件'
-        //     },
-        //     auto: true,
-        //     swf: './webuploader-0.1.5/Uploader.swf',
-        //     chunked: true, //分片处理大文件
-        //     chunkSize: 1 * 1024 * 1024,
-        //     serverroot: 'http://localhost:5000/',
-        //     server: 'http://localhost:5000/files',
-        //     ownerToken: '2HGNr048HJPZ8MFLRenwpgeAjurwCAAAAAQAAAAEAAAAAXNdzOA',
-        //     disableGlobalDnd: true,
-        //     threads: 1, //上传并发数
-        //     fileNumLimit: 300,
-        //     compress: false, //图片在上传前不进行压缩
-        //     fileSizeLimit: 1024 * 1024 * 1024,    // 1024 M
-        //     fileSingleSizeLimit: 1024 * 1024 * 1024,    // 1024 M
-        //     //允许重复上传
-        //     duplicate: true,
-        //     onUploadProgress: function (file, percent) {//一般用此事件做页面信息提示
-        //         console.info('xxx', this.getFile(file.id));
-        //         return true;
-        //         //trtds.find('.progressDiv span').html(percent == 1 ? '正在合并文件' : (percent < 0 ? ' 计算md5进度:' : ' 上传进度:') + Math.floor(percent * 100));
-        //     }
-        // }).;
     </script>
 </body>
 
