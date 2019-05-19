@@ -22,7 +22,9 @@
     <script>
         $(function () {
             //默认选择后自动上传
-            $('#picker').webuploader();
+            $('#picker').webuploader({
+                server:'http://219.132.28.170:5000/'
+            });
             //选择后点击再上传
             $('#picker1').webuploader({auto:false,pickupload:'#btnUploader'});
         });

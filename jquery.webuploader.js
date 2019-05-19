@@ -41,11 +41,13 @@
                                         fileName: file.name
                                     });
                                     console.log("成功获取文件信息……");
-                                } else {
+                                }
+                                else {
+                                    _this.on("uploadSuccess", _this.options.onUploadSuccess(file,d));
                                     deferred.reject(d);
                                 }
                                 //获取文件信息后进入下一步 
-                                deferred.resolve();
+                                deferred.resolve(d);
                             },
                             error: function (returndata) {
                                 console.info("Check File Error:", returndata);
